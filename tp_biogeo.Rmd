@@ -1,0 +1,43 @@
+---
+title: "TD Biogéographie Fonctionnelle"
+author: "Matthias Grenié"
+date: "14 novembre 2018"
+output: pdf_document
+bibliography: bibliography.bib
+---
+
+L'idée de ce TD/TP est de mettre en pratique les concepts étudiés durant le cours sur la diversité fonctionnelle.
+
+Ici on s'intéressera à la biogéographie fonctionnelle [@Violle_emergence_2014].
+
+Utilisation du paquet FD 
+
+Description de la situation et question
+
+Issue de la publication... On veut faire ci et ça
+
+Téléchargement des données
+
+Inspection rapide
+
+Calcul des indices de diversité fonctionnelles
+
+Indices univariés <-> CWM
+
+Calcul à la main pour le décomposer puis avec FD
+
+Relation CWM <-> Environnement
+
+Interprétation
+
+[@Miller_Functional_2018; @Muscarella_communityweighted_2016; @Peres-Neto_Linking_2016]
+Importance des modèles nuls
+
+Indices multivariés [@Villeger_New_2008] insérer figure de description issue de [@Mouillot_functional_2013]. Permet de comprendre quelle dimension varie.
+
+Rappeler formule
+
+Calcul de ces indices:
+
+
+ 
