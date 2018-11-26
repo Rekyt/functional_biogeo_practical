@@ -16,24 +16,47 @@ Utilisation du paquet FD
 
 On comprend pas encore les relations traits environnements.
 Relation entre traits des plantes & gradient environnemental.
-On se base dans une écosystème tempéré pour comprendre les variables d'importance qui permettent d'expliquer les traits des plantes.
 
-On s'intéresse aux traits foliaires car blabla plus variables, différence de stratégie importante etc.
+Importance de
+
+On s'intéresse aux traits foliaires car blabla plus variables, différence de stratégie importante etc. Quelle réponse des traits foliaires à l'environnement ? Différentes réponses observées à différentes échelles.
+
 
 Afin de mettre en évidence les traits les plus importants on utilise le **Community-Weighted Mean** qui représente le trait dominant dans une communauté donnée .
 
+$$
+CWM_i = \sum_{i = 1}^{S}p_i T_i,
+$$
+avec $i$ l'indice d'espèces, $p_i = \frac{N_i}{N}$ l'abondance relative de l'espèce $i$ ($N_i$ l'abondance de l'espèce $i$ et $N$ l'abondance totale dans la communauté) et $T_i$ le trait moyen de l'espèce $i$.
 
-Issue de la publication... On veut faire ci et ça
+## Chargement des données
 
-Téléchargement des données
+D'où viennent ces données ?
 
-Inspection rapide
+Inspection rapide combien de communautés, combien d'espèces, abondances des espèces.
 
-Calcul des indices de diversité fonctionnelles
+Tableau sites-espèces, tableau espèces-traits & tableau sites-environnement.
 
-Indices univariés <-> CWM
+## Indices univariés <-> CWM
 
-Calcul à la main pour le décomposer puis avec FD
+On observe une communauté, variance de traits etc.
+
+
+### Cartes
+
+## Relation du CWM aux variables environnementales classiques
+
+### Cartes
+
+## Un meilleur prédicteur des traits foliaires : la longueur de la saison de croissance
+
+### Cartes
+
+## Et la diversité fonctionnelle ?
+
+### Cartes
+
+## Interpolation pour faire des cartes lisses ?
 
 Relation CWM <-> Environnement
 
@@ -44,9 +67,6 @@ Importance des modèles nuls
 
 Indices multivariés [@Villeger_New_2008] insérer figure de description issue de [@Mouillot_functional_2013]. Permet de comprendre quelle dimension varie.
 
-Rappeler formule
-
-Calcul de ces indices:
-
+## Autre façon d'étudier les relations traits environnements : l'analyse RLQ ?
 
  
