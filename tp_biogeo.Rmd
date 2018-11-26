@@ -12,7 +12,16 @@ Ici on s'intéressera à la biogéographie fonctionnelle [@Violle_emergence_2014
 
 Utilisation du paquet FD 
 
-Description de la situation et question
+## Description de la situation et question
+
+On comprend pas encore les relations traits environnements.
+Relation entre traits des plantes & gradient environnemental.
+On se base dans une écosystème tempéré pour comprendre les variables d'importance qui permettent d'expliquer les traits des plantes.
+
+On s'intéresse aux traits foliaires car blabla plus variables, différence de stratégie importante etc.
+
+Afin de mettre en évidence les traits les plus importants on utilise le **Community-Weighted Mean** qui représente le trait dominant dans une communauté donnée .
+
 
 Issue de la publication... On veut faire ci et ça
 
