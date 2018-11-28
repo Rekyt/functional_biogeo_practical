@@ -10,39 +10,249 @@ L'idée de ce TD/TP est de mettre en pratique les concepts étudiés durant le c
 
 Ici on s'intéressera à la biogéographie fonctionnelle [@Violle_emergence_2014].
 
-Utilisation du paquet FD 
-
 ## Description de la situation et question
 
-On comprend pas encore les relations traits environnements.
-Relation entre traits des plantes & gradient environnemental.
+Importance de l'étude des traits foliaires pour la compréhension globale des écosystèmes. Notamment dans les modèles climatiques pour prédire les impacts des changements environnementaux et le **feedback** des écosystèmes sur ceux-ci. 
 
-Importance de
+L'idée de la biogéographie fonctionnelle est d'étudier la distribution spatiale des différents traits afin de mieux comprendre les processus qui façonnent ces traits. 
 
-On s'intéresse aux traits foliaires car blabla plus variables, différence de stratégie importante etc. Quelle réponse des traits foliaires à l'environnement ? Différentes réponses observées à différentes échelles.
-
-
-Afin de mettre en évidence les traits les plus importants on utilise le **Community-Weighted Mean** qui représente le trait dominant dans une communauté donnée .
-
-$$
-CWM_i = \sum_{i = 1}^{S}p_i T_i,
-$$
-avec $i$ l'indice d'espèces, $p_i = \frac{N_i}{N}$ l'abondance relative de l'espèce $i$ ($N_i$ l'abondance de l'espèce $i$ et $N$ l'abondance totale dans la communauté) et $T_i$ le trait moyen de l'espèce $i$.
+Ici on manipulera une base de données de plantes herbacées de prairie agrégées de nombreux relevés issus d'archive différentes.
 
 ## Chargement des données
 
-D'où viennent ces données ?
+Le dossier `data` contient trois fichiers qui décrivent chacun un aspect des données :
 
-Inspection rapide combien de communautés, combien d'espèces, abondances des espèces.
+* `divgrass_env_subset.csv` est un tableau des variables environnementales décrivant les sites, il contient les identifiants des sites ansi qu'un certain nombre de variables environnementales que l'on décrira plus bas,
+* `divgrass_releves_subset.csv` est un tableau contenant les relevés proprement dit, avec une colonne indiquant le site, une autre l'espèce décrite et la troisième l'abondance locale de l'espèce,
+* `divgrass_traits.csv` contient des valeurs moyennes de traits par espèces issues de différentes bases de données.
 
-Tableau sites-espèces, tableau espèces-traits & tableau sites-environnement.
+```{r loading_data}
+# On charge les données environnementales
+divgrass_env = read.csv("data/divgrass/divgrass_env_subset.csv")
 
-## Indices univariés <-> CWM
+# Puis les relevés
+divgrass_releves = read.csv("data/divgrass/divgrass_releves_subset.csv")
 
-On observe une communauté, variance de traits etc.
+# Puis les traits
+divgrass_traits  = read.csv("data/divgrass/divgrass_traits.csv")
+```
 
+On alors regarder la structure des données afin de les décrire. On utilisera les fonctions `head()` pour afficher les premières lignes, `summary()` pour afficher un résumé des données et `dim()` pour obtenir les dimensions des tableaux.
+
+```{r data_structure, echo = FALSE, results='hide'}
+head(divgrass_env)
+summary(divgrass_env)
+dim(divgrass_env)
+
+head(divgrass_releves)
+summary(divgrass_releves)
+dim(divgrass_releves)
+
+head(divgrass_traits)
+summary(divgrass_traits)
+dim(divgrass_traits)
+```
+
+On peut alors décrire les colonnes des différents fichiers.
+
+Pour `divgrass_env_subset.csv`:
+
+* `site`
+* `human_influence_index`
+* `annual_temp`
+* `annual_prec`            
+* `prec_seasonality`
+* `prec_driest_quarter`
+* `prec_warmest_quarter`
+* `mean_temp_diurnal_range`
+* `isothermality`
+* `temp_seasonality`
+* `temp_annual_range`
+* `annual_pet`
+* `aridity_index`
+* `climate_moisture`
+* `continentality`
+* `aurhely_annual_prec`
+* `aurhely_annual_temp`
+* `gsl`
+
+Pour `divgrass_releves`:
+
+* `site`
+* `species`
+* `abund`
+
+Enfin pour `divgrass_traits`:
+
+* `species`
+* `sla`
+* `plant_height`
+* `seed_mass`
+* `ldmc`
+* `leaf_area`
+* `lnc_m`
+* `lpc_m`
+* `lnc_a`
+* `vcmax`
+
+En regardant le tableau des traits (avec la fonction `summary()`), on remarque que beaucoup de traits sont manquants et que le nombre de traits manquant dépend des traits choisis.
+
+Avant de pouvoir calculer des indices de diversité fonctionnelle il faut faire correspondre les jeux données afin de "coller" les valeurs de traits aux espèces présentes, on peut utiliser la fonction `merge()` pour le faire :
+
+```{r merge_example, results='hide'}
+releves_traits = merge(divgrass_releves, divgrass_traits, by = "species")
+
+head(releves_traits)
+```
+
+On pourra procéder de la même façon pour joindre les variables environnementales identifiants de sites.
+
+## Variables environnementales
+
+Pour une première approche des gradients environnementaux, on utilise uniquement deux variables environnementales : la température moyenne annuelle d'un site et les précipitations annuelles moyennes d'un site.
+
+On peut commencer par représenter des histogrammes des variables environnementales.
+
+```{r environmental_data}
+# On change les paramètres graphiques pour avoir deux graphiques l'un au-dessus de l'autre
+par(mfrow = c(2, 1))
+
+# Graphe des températures
+hist(divgrass_env$annual_temp / 10, col = "gray50", border = "white",
+     main = "Température Annuelle Moyenne des sites de divgrass",
+     xlab = "Température Annuelle Moyenne", ylab = "Effectifs")
+
+# Graphe des précipitations
+hist(divgrass_env$annual_prec / 10, col = "gray50", border = "white",
+     main = "Précipitations Annuelles Moyennes des sites de divgrass",
+     xlab = "Précipitations Annuelles Moyennes", ylab = "Effectifs")
+
+```
 
 ### Cartes
+
+L'intérêt de la biogéographie fonctionnelle est aussi de visualiser les différentes variables sur une carte. Pour cela on va se servir du package `sf` qui permet de manipuler des données spatialisées et le package `rnaturalearth` qui permet d'obtenir des fonds de carte.
+
+```{r temperature_map}
+library("sf")
+library("rnaturalearth")
+
+divgrass_sf = st_as_sf(divgrass_env, coords = c("longitude", "latitude"),
+                       crs = st_crs(4326))
+
+france_map = read_sf("data/fr_departement/DEPARTEMENT.shp", crs = st_crs(2154))
+
+par(mfrow = c(1, 2))
+# Carte des températures
+# Le fond de carte d'abord
+plot(france_map[0], reset = FALSE, main = "Température Annuelle Moyenne")
+# Les points montrant les communautés
+plot(st_transform(divgrass_sf["annual_temp"], st_crs(france_map)),
+     pch = 16, key.pos = NULL, add = TRUE)
+
+plot(france_map[0], reset = FALSE, main = "Précipitations Annuelles Moyennes")
+# Les points montrant les communautés
+plot(st_transform(divgrass_sf["annual_prec"], st_crs(france_map)),
+     pch = 16, key.pos = NULL, add = TRUE)
+```
+
+
+## Description de la variation des traits
+
+Afin de voir la variation des traits on peut regarder la distribution au sein d'une seule communauté pour commencer. Par exemple le site `_00300000063701031712`
+
+```{r relative_abundances}
+un_site = subset(releves_traits, releves_traits$site == "_00300000063701031712")
+
+hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans une communauté", xlab = "Surface Spécifique Foliaire", ylab = "Effectifs",
+     col = "gray50", border = "white")
+```
+
+Représenter les histogrammes pour les autres traits. *Que remarquez-vous ?*
+
+La variance des traits dans une communauté peut nous renseigner sur les processus contraignant cette communauté (filtre environnemental particulier par exemple). Cependant selon l'hypothèse de **mass-ratio** les organismes les plus abondants (en nombre ou en biomasse) ont le plus gros impact sur les écosystèmes que les espèces les moins abondantes [@Garnier_Plant_2004; @Grime_Benefits_1998]. On peut donc s'intéresser au trait moyen pondéré par les abondances relatives des espèces, c'est le **Community-Weighted Mean** (CWM), il se calcule de la façon suivante :
+
+$$
+CWM = \sum_{i = 1}^{S}p_i T_i,
+$$
+avec $i$ l'indice d'espèces, $p_i = \frac{N_i}{N}$ l'abondance relative de l'espèce $i$ ($N_i$ l'abondance de l'espèce $i$ et $N$ l'abondance totale dans la communauté) et $T_i$ le trait moyen de l'espèce $i$.
+
+Par exemple pour notre site préalablement sélectionné on doit d'abord calculer l'abondance totale du site $N$ pour calculer l'abondance relative de chaque espèce :
+
+```{r un_site_cwm}
+# Abondance totale
+total_abund = sum(un_site$abund)
+
+# Calcul de l'abondance relative des espèces
+un_site$rel_abund = un_site$abund / total_abund
+
+# Calcul du CWM du SLA
+cwm_sla = sum(un_site$rel_abund * un_site$sla)
+
+# On peut représenter à nouveau la distribution du SLA avec le CWM
+hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans une communauté", xlab = "Surface Spécifique Foliaire", ylab = "Effectifs",
+     col = "gray50", border = "white")
+abline(v = cwm_sla, col = "red", lty = 2)
+```
+
+Calculer et représenter le CWM pour les autres traits. On pourra utiliser `par(mfrow = c(2, 2))` pour obtenir 4 graphiques sur la même fenêtre.
+
+```{r, echo = FALSE, results = 'hide'}
+
+hist_cwm = function(given_site, given_trait, given_main, given_xlab) {
+    computed_cwm = sum(given_site$rel_abund * given_site[[given_trait]],
+                       na.rm = TRUE)
+
+    # On peut représenter à nouveau la distribution du SLA avec le CWM
+    hist(given_site[[given_trait]], main = given_main, xlab = given_xlab,
+         ylab = "Effectifs", col = "gray50", border = "white")
+    abline(v = computed_cwm, col = "red", lty = 2)
+}
+
+par(mfrow = c(2, 2))
+lapply(c("sla", "ldmc", "lnc_m", "lpc_m"), function(x) hist_cwm(un_site, x, given_main = x, given_xlab = x))
+
+```
+
+Maintenant qu'on a pu calculer le CWM des traits foliaires sur une communauté on peut généraliser le calcul à toute les communautés.
+
+```{r all_total_abund}
+# On utilise la fonction 'aggregate()' pour sommer les abondances par site
+all_abund = aggregate(abund ~ site, releves_traits, sum)
+colnames(all_abund)[2] = "tot_abund"
+
+# On ajoute la colonne d'abondance totale pour chaque espèce dans chaque site
+releves_traits = merge(releves_traits, all_abund, by = "site")
+
+# On calcule l'abondance relative
+releves_traits$rel_abund = releves_traits$abund / releves_traits$tot_abund
+
+# On calcule les CWM pour chaque communauté
+all_cwm_sla   = aggregate(rel_abund * sla ~ site, releves_traits, sum)
+colnames(all_cwm_sla)[2] = "cwm_sla"
+
+all_cwm_ldmc  = aggregate(rel_abund * ldmc ~ site, releves_traits, sum,
+                          na.rm = TRUE)
+colnames(all_cwm_ldmc)[2] = "cwm_ldmc"
+
+all_cwm_lnc_m = aggregate(rel_abund * lnc_m ~ site, releves_traits, sum,
+                          na.rm = TRUE)
+colnames(all_cwm_lnc_m)[2] = "cwm_lnc_m"
+
+all_cwm_lpc_m = aggregate(rel_abund * lpc_m ~ site, releves_traits, sum,
+                          na.rm = TRUE)
+colnames(all_cwm_lpc_m)[2] = "cwm_lpc_m"
+
+# On colle toutes valeurs de CWM par site
+all_cwm = Reduce(function(x, y) merge(x, y, by = "site"), list(all_cwm_sla,
+                                                               all_cwm_ldmc,
+                                                               all_cwm_lnc_m,
+                                                               all_cwm_lpc_m))
+
+# On ajoute les variables environnementales aux CWM
+all_cwm = merge(all_cwm, divgrass_env, by = "site")
+```
+
 
 ## Relation du CWM aux variables environnementales classiques
 
@@ -52,11 +262,6 @@ On observe une communauté, variance de traits etc.
 
 ### Cartes
 
-## Et la diversité fonctionnelle ?
-
-### Cartes
-
-## Interpolation pour faire des cartes lisses ?
 
 Relation CWM <-> Environnement
 
@@ -69,4 +274,4 @@ Indices multivariés [@Villeger_New_2008] insérer figure de description issue d
 
 ## Autre façon d'étudier les relations traits environnements : l'analyse RLQ ?
 
- 
+Utilisation du package `ade4` controverses autour du patron statistique CWM <-> environnement.
