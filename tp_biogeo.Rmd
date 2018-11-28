@@ -135,12 +135,15 @@ L'intérêt de la biogéographie fonctionnelle est aussi de visualiser les diff�
 
 ```{r temperature_map}
 library("sf")
-library("rnaturalearth")
 
 divgrass_sf = st_as_sf(divgrass_env, coords = c("longitude", "latitude"),
                        crs = st_crs(4326))
 
+# On change le système de coordonnées pour correspondre à la carte de France
+divgrass_sf = st_transform(divgrass_sf, st_crs(2154))
+
 france_map = read_sf("data/fr_departement/DEPARTEMENT.shp", crs = st_crs(2154))
+
 
 par(mfrow = c(1, 2))
 # Carte des températures
@@ -210,7 +213,8 @@ hist_cwm = function(given_site, given_trait, given_main, given_xlab) {
 }
 
 par(mfrow = c(2, 2))
-lapply(c("sla", "ldmc", "lnc_m", "lpc_m"), function(x) hist_cwm(un_site, x, given_main = x, given_xlab = x))
+lapply(c("sla", "ldmc", "lnc_m", "lpc_m"),
+       function(x) hist_cwm(un_site, x, given_main = x, given_xlab = x))
 
 ```
 
@@ -249,13 +253,32 @@ all_cwm = Reduce(function(x, y) merge(x, y, by = "site"), list(all_cwm_sla,
                                                                all_cwm_lnc_m,
                                                                all_cwm_lpc_m))
 
+
+```
+
+De la même façon que plus haut on peut représenter des cartes de CWM :
+
+```{r cwm_maps}
+all_cwm_sf = merge(divgrass_sf, all_cwm, by = "site")
+
+plot(france_map[0], reset = FALSE, main = "CWM SLA")
+plot(all_cwm_sf["cwm_sla"], add = TRUE, pch = 16, key.pos = NULL)
+```
+
+Représenter les cartes pour les autres traits retenus.
+
+## Relation du CWM aux variables environnementales classiques
+
+Après avoir calculer le CWM des traits par communauté on peut maintenant le relier aux variables environnementales des sites associés aux CWM, afin de voir quelle variation de trait peut être expliquée par les variables environnementales.
+
+```{r cwm_env, options}
 # On ajoute les variables environnementales aux CWM
 all_cwm = merge(all_cwm, divgrass_env, by = "site")
 ```
 
+Ici on regarde simplement la relation à la température annuelle moyenne et aux précipitations annuelles moyennes.
 
-## Relation du CWM aux variables environnementales classiques
-
+On fait un modèle linéaire simple pour voir les relations.
 ### Cartes
 
 ## Un meilleur prédicteur des traits foliaires : la longueur de la saison de croissance
