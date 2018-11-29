@@ -1,18 +1,31 @@
 ---
 title: "TD Biogéographie Fonctionnelle"
 author: "Matthias Grenié"
-date: "14 novembre 2018"
+date: "29 novembre 2018"
 output: pdf_document
+header-includes:
+    - \usepackage[utf8]{inputenc}
+    - \usepackage{hyperref}
+link-citations: true
+urlcolor: blue
+linkcolor: blue
 bibliography: bibliography.bib
 ---
 
-## Contexte et questions
+```{r, echo = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
 
-Importance de l'étude des traits foliaires pour la compréhension globale des écosystèmes. Notamment dans les modèles climatiques pour prédire les impacts des changements environnementaux et le *feedback* des écosystèmes sur ceux-ci. 
+
+## Contexte et questions
 
 L'idée de la biogéographie fonctionnelle est d'étudier la distribution spatiale des différents traits afin de mieux comprendre les processus qui façonnent ces traits [@Violle_emergence_2014]. 
 
-Ici on manipulera une base de données de plantes herbacées de prairie agrégées de nombreux relevés issus d'archive différentes.
+Les plantes représentent un compartiment majeur des écosystèmes terrestres. Les traits foliaires sont donc particulièrement important pour la compréhension des cycles biogéochimiques par exemple de l'eau ou du carbone. Afin de mieux comprendre le fonctionnement des écosystèmes, il est important d'élucider les relations entre la variation des traits foliaires et leur environnement.
+
+Plusieurs études globales sur les traits foliaires ont montré des relations contrastées [@ordonez_global_2009; @reich_world-wide_2014]. Montrant parfois des relations de certains traits positives avec la température, d'autres négatives. En outre, ces études globales n'ont pas fait de différence entre les espèces rares et communes.
+
+Durant ce TD nous allons reproduire les analyses de [@borgy_plant_2017] pour relier les traits foliaires aux conditions environnementales en France métropolitaine, à partir de différentes base de données.
 
 ## Chargement des données
 
@@ -21,6 +34,7 @@ Le dossier `data` contient trois fichiers qui décrivent chacun un aspect des do
 * `divgrass_env_subset.csv` est un tableau des variables environnementales décrivant les sites, il contient les identifiants des sites ansi qu'un certain nombre de variables environnementales que l'on décrira plus bas,
 * `divgrass_releves_subset.csv` est un tableau contenant les relevés proprement dit, avec une colonne indiquant le site, une autre l'espèce décrite et la troisième l'abondance locale de l'espèce,
 * `divgrass_traits.csv` contient des valeurs moyennes de traits par espèces issues de différentes bases de données.
+
 
 ```{r loading_data}
 # On charge les données environnementales
@@ -33,7 +47,9 @@ divgrass_releves = read.csv("data/divgrass_releves.csv")
 divgrass_traits  = read.csv("data/divgrass_traits.csv")
 ```
 
+
 On peut alors regarder la structure des données afin de les décrire. On utilisera les fonctions `head()` pour afficher les premières lignes, `summary()` pour afficher un résumé des données et `dim()` pour obtenir les dimensions des tableaux.
+
 
 ```{r data_structure, echo = FALSE, results='hide'}
 head(divgrass_env)
@@ -49,7 +65,9 @@ summary(divgrass_traits)
 dim(divgrass_traits)
 ```
 
+
 On peut alors décrire les colonnes des différents fichiers.
+
 
 Pour `divgrass_env.csv`:
 
@@ -60,23 +78,25 @@ Pour `divgrass_env.csv`:
 * `annual_prec`, les précipitations annuelles en mm telles d'après les modélisation WorldClim [@hijmans_very_2005] ;          
 * `gsl`, la longueur de la saison de croissance, en nombre de jours (voir dernière partie pour l'explication du calcul).
 
+
 Pour `divgrass_releves`:
 
 * `site`, l'identifiant du site ;
 * `species`, le nom binomial de l'espèce observée dans le site ;
 * `abund`, l'abondance locale de l'espèce dans le site observée.
 
+
 Enfin pour `divgrass_traits`:
 
 * `species`, le nom binomial de l'espèce ;
-* `sla`, la surface spécifique foliaire moyenne de l'espèce d'après la base de données TRY [@kattge_try_2011] ;
-* `ldmc` [@kattge_try_2011] ;
-* `lnc_m`
-* `lpc_m`
+* `sla`, la surface spécifique foliaire en mètre carrés par kilogramme (*Specific Leaf Area*, SLA) moyenne de l'espèce d'après la base de données TRY [@kattge_try_2011] ;
+* `ldmc`, la teneur en matière sèche des feuilles en gramme par gramme de feuille (*Leaf Dry Matter Content*, LDMC) moyenne de l'espèce d'après la base de données TRY [@kattge_try_2011] ;
+* `lnc_m`, la teneur en azote foliaire par unité de masse en mg d'azote par gramme de feuille (*Leaf Nitrogen Content per Mass*, LNC_m), d'après la base de données TRY [@kattge_try_2011] ;
+* `lpc_m`, la teneur en phosphore foliaire par unité de masse en mg de phosphore par gramme de feuille (*Leaf Phosphorus Content per Mass*, LPC_m), d'après la base de données TRY [@kattge_try_2011].
 
-En regardant le tableau des traits (avec la fonction `summary()`), on remarque que beaucoup de traits sont manquants et que le nombre de traits manquant dépend des traits choisis.
 
 Avant de pouvoir calculer des indices de diversité fonctionnelle il faut faire correspondre les jeux données afin de "coller" les valeurs de traits aux espèces présentes, on peut utiliser la fonction `merge()` pour le faire :
+
 
 ```{r merge_example, results='hide'}
 releves_traits = merge(divgrass_releves, divgrass_traits, by = "species")
@@ -88,9 +108,10 @@ On pourra procéder de la même façon pour joindre les variables environnementa
 
 ## Variables environnementales
 
-Pour une première approche des gradients environnementaux, on utilise uniquement deux variables environnementales : la température moyenne annuelle d'un site et les précipitations annuelles moyennes d'un site.
+Pour une première approche des gradients environnementaux, on utilise uniquement deux variables environnementales : la température moyenne annuelle d'un site et les précipitations annuelles d'un site.
 
 On peut commencer par représenter des histogrammes des variables environnementales.
+
 
 ```{r environmental_data}
 # On change les paramètres graphiques pour avoir deux graphiques l'un au-dessus de l'autre
@@ -110,7 +131,7 @@ hist(divgrass_env$annual_prec / 10, col = "gray50", border = "white",
 
 ### Cartes
 
-L'intérêt de la biogéographie fonctionnelle est aussi de visualiser les différentes variables sur une carte. Pour cela on va se servir du package `sf` qui permet de manipuler des données spatialisées et le package `rnaturalearth` qui permet d'obtenir des fonds de carte.
+L'intérêt de la biogéographie fonctionnelle est aussi de visualiser les différentes variables sur une carte. Pour cela on va se servir du package `sf` qui permet de manipuler des données spatialisées.
 
 ```{r temperature_map}
 library("sf")
@@ -123,21 +144,15 @@ divgrass_sf = st_transform(divgrass_sf, st_crs(2154))
 
 france_map = read_sf("data/fr_departement/DEPARTEMENT.shp", crs = st_crs(2154))
 
-
-par(mfrow = c(1, 2))
 # Carte des températures
 # Le fond de carte d'abord
 plot(france_map[0], reset = FALSE, main = "Température Annuelle Moyenne")
 # Les points montrant les communautés
 plot(st_transform(divgrass_sf["annual_temp"], st_crs(france_map)),
      pch = 16, key.pos = NULL, add = TRUE)
-
-plot(france_map[0], reset = FALSE, main = "Précipitations Annuelles Moyennes")
-# Les points montrant les communautés
-plot(st_transform(divgrass_sf["annual_prec"], st_crs(france_map)),
-     pch = 16, key.pos = NULL, add = TRUE)
 ```
 
+**Représenter** la même carte pour les précipitations.
 
 ## Description de la variation des traits
 
@@ -146,11 +161,12 @@ Afin de voir la variation des traits on peut regarder la distribution au sein d'
 ```{r relative_abundances}
 un_site = subset(releves_traits, releves_traits$site == "_00300000063701031712")
 
-hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans une communauté", xlab = "Surface Spécifique Foliaire", ylab = "Effectifs",
+hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans une communauté",
+     xlab = "Surface Spécifique Foliaire", ylab = "Effectifs",
      col = "gray50", border = "white")
 ```
 
-Représenter les histogrammes pour les autres traits. *Que remarquez-vous ?*
+**Représenter** les histogrammes pour les autres traits. **Que remarquez-vous ?**
 
 La variance des traits dans une communauté peut nous renseigner sur les processus contraignant cette communauté (filtre environnemental particulier par exemple). Cependant selon l'hypothèse de *mass-ratio* les organismes les plus abondants (en nombre ou en biomasse) ont le plus gros impact sur les écosystèmes que les espèces les moins abondantes [@Garnier_Plant_2004; @Grime_Benefits_1998]. On peut donc s'intéresser au trait moyen pondéré par les abondances relatives des espèces, c'est le *Community-Weighted Mean* (CWM), il se calcule de la façon suivante :
 
@@ -172,12 +188,13 @@ un_site$rel_abund = un_site$abund / total_abund
 cwm_sla = sum(un_site$rel_abund * un_site$sla)
 
 # On peut représenter à nouveau la distribution du SLA avec le CWM
-hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans une communauté", xlab = "Surface Spécifique Foliaire", ylab = "Effectifs",
+hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans une communauté",
+     xlab = "Surface Spécifique Foliaire", ylab = "Effectifs",
      col = "gray50", border = "white")
 abline(v = cwm_sla, col = "red", lty = 2)
 ```
 
-Calculer et représenter le CWM pour les autres traits. On pourra utiliser `par(mfrow = c(2, 2))` pour obtenir 4 graphiques sur la même fenêtre.
+**Calculer et représenter** le CWM pour les autres traits. On pourra utiliser `par(mfrow = c(2, 2))` pour obtenir 4 graphiques sur la même fenêtre.
 
 ```{r, echo = FALSE, results = 'hide'}
 
@@ -244,7 +261,8 @@ plot(france_map[0], reset = FALSE, main = "CWM SLA")
 plot(all_cwm_sf["cwm_sla"], add = TRUE, pch = 16, key.pos = NULL)
 ```
 
-Représenter les cartes pour les autres traits retenus.
+**Représenter** les cartes pour les autres traits retenus.
+
 
 ## Relation du CWM aux variables environnementales classiques
 
@@ -259,8 +277,11 @@ Ici s'intéresse à la relation entre température annuelle moyenne, précipitat
 
 ```{r cwm_env_plot}
 # Graphique simple
-plot(all_cwm$annual_temp, all_cwm$cwm_sla, main = "Relation CWM SLA <-> Température Annuelle Moyenne", xlab = "Température Annuelle Moyenne", ylab = "Surface Spécifique Foliaire")
+plot(all_cwm$annual_temp, all_cwm$cwm_sla, main = "Relation CWM SLA <-> Température Annuelle Moyenne",
+     xlab = "Température Annuelle Moyenne",
+     ylab = "Surface Spécifique Foliaire")
 ```
+
 Le résultat est assez fouilli même si l'on a l'impression de discerner une tendance linéaire. On peut le vérifier en utilisant des points transparents :
 
 ```{r}
@@ -273,10 +294,9 @@ plot(all_cwm$annual_temp, all_cwm$cwm_sla,
 
 ```
 
-Calculer la corrélation entre les deux variables en utilisant la fonction `cor.test()`. Puis utiliser la fonction `lm()` avec la syntaxe suivante `lm(mon_cwm ~ ma_variable_climatique, data = all_cwm)` pour faire une régression linéaire entre la valeur de CWM et la variable climatique.
+**Calculer la corrélation** entre les deux variables en utilisant la fonction `cor.test()`. **Puis utiliser** la fonction `lm()` avec la syntaxe suivante `lm(mon_cwm ~ ma_variable_climatique, data = all_cwm)` pour faire une régression linéaire entre la valeur de CWM et la variable climatique.
 
-Le faire pour les précipitations avec l'ensemble des CWM pour l'ensemble des traits.
-Décrire les relations observées.
+**Comparer ces relations** avec celles obtenues avec les précipitations.
 
 ## Un meilleur prédicteur des traits foliaires : la longueur de la saison de croissance
 
@@ -292,8 +312,7 @@ En combinant des modèles de bilan hydrique qui prédisent la disponibilité en 
 
 Étant donné le plus grand réalisme biologique impliqué dans la construction de cette variable on s'attend à ce qu'elle détermine mieux les traits foliaires observés que la température annuelle moyenne ou les précipitations annuelles.
 
-Utiliser la variable `gsl` disponible dans le tableau sites-environnement pour étudier la relation avec les CWM des différents traits foliaires et comparer aux autre variables climatiques.
-
+**Utiliser** la variable `gsl` disponible dans le tableau sites-environnement faire une carte de GSL à l'échelle de la France. Puis étudier la relation avec les CWM des différents traits foliaires et comparer aux autre variables climatiques.
 
 ## Une autre façon d'étudier les relations traits–environnement : l'analyse en quatrième-coin
 
@@ -334,7 +353,7 @@ Comme certains traits sont manquant l'analyse ne peut fonctionner il ne faut don
 # On sélectionne les espèces pour lesquelles on a des traits
 trait_tab_no_missing = trait_tab[complete.cases(trait_tab),]
 
-# On doit faire un sous-ensemble des espèces pour lesquelles on a les traits et qui sont bien dans nos sites
+# On fait un sous-ensemble d'espèce pour nous assurer qu'on a bien les espèces
 no_missing_species = intersect(rownames(trait_tab_no_missing), colnames(site_sp_tab))
 
 trait_tab_no_missing = trait_tab_no_missing[no_missing_species, ]
@@ -351,4 +370,7 @@ divgrass_rlq = ade4::fourthcorner(env_tab, site_sp_tab_no_missing,
 summary(divgrass_rlq)
 plot(divgrass_rlq)
 ```
+
+
+## Références
 
