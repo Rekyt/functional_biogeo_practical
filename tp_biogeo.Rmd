@@ -1,6 +1,6 @@
 ---
 title: "TD Biogéographie Fonctionnelle"
-author: "Matthias Grenié"
+author: "Matthias Grenié <matthias.grenie@cefe.cnrs.fr>"
 date: "29 novembre 2018"
 output: pdf_document
 header-includes:
