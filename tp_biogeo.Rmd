@@ -6,15 +6,11 @@ output: pdf_document
 bibliography: bibliography.bib
 ---
 
-L'idée de ce TD/TP est de mettre en pratique les concepts étudiés durant le cours sur la diversité fonctionnelle.
+## Contexte et questions
 
-Ici on s'intéressera à la biogéographie fonctionnelle [@Violle_emergence_2014].
+Importance de l'étude des traits foliaires pour la compréhension globale des écosystèmes. Notamment dans les modèles climatiques pour prédire les impacts des changements environnementaux et le *feedback* des écosystèmes sur ceux-ci. 
 
-## Description de la situation et question
-
-Importance de l'étude des traits foliaires pour la compréhension globale des écosystèmes. Notamment dans les modèles climatiques pour prédire les impacts des changements environnementaux et le **feedback** des écosystèmes sur ceux-ci. 
-
-L'idée de la biogéographie fonctionnelle est d'étudier la distribution spatiale des différents traits afin de mieux comprendre les processus qui façonnent ces traits. 
+L'idée de la biogéographie fonctionnelle est d'étudier la distribution spatiale des différents traits afin de mieux comprendre les processus qui façonnent ces traits [@Violle_emergence_2014]. 
 
 Ici on manipulera une base de données de plantes herbacées de prairie agrégées de nombreux relevés issus d'archive différentes.
 
@@ -28,16 +24,16 @@ Le dossier `data` contient trois fichiers qui décrivent chacun un aspect des do
 
 ```{r loading_data}
 # On charge les données environnementales
-divgrass_env = read.csv("data/divgrass/divgrass_env_subset.csv")
+divgrass_env = read.csv("data/divgrass_env.csv")
 
 # Puis les relevés
-divgrass_releves = read.csv("data/divgrass/divgrass_releves_subset.csv")
+divgrass_releves = read.csv("data/divgrass_releves.csv")
 
 # Puis les traits
-divgrass_traits  = read.csv("data/divgrass/divgrass_traits.csv")
+divgrass_traits  = read.csv("data/divgrass_traits.csv")
 ```
 
-On alors regarder la structure des données afin de les décrire. On utilisera les fonctions `head()` pour afficher les premières lignes, `summary()` pour afficher un résumé des données et `dim()` pour obtenir les dimensions des tableaux.
+On peut alors regarder la structure des données afin de les décrire. On utilisera les fonctions `head()` pour afficher les premières lignes, `summary()` pour afficher un résumé des données et `dim()` pour obtenir les dimensions des tableaux.
 
 ```{r data_structure, echo = FALSE, results='hide'}
 head(divgrass_env)
@@ -55,45 +51,28 @@ dim(divgrass_traits)
 
 On peut alors décrire les colonnes des différents fichiers.
 
-Pour `divgrass_env_subset.csv`:
+Pour `divgrass_env.csv`:
 
-* `site`
-* `human_influence_index`
-* `annual_temp`
-* `annual_prec`            
-* `prec_seasonality`
-* `prec_driest_quarter`
-* `prec_warmest_quarter`
-* `mean_temp_diurnal_range`
-* `isothermality`
-* `temp_seasonality`
-* `temp_annual_range`
-* `annual_pet`
-* `aridity_index`
-* `climate_moisture`
-* `continentality`
-* `aurhely_annual_prec`
-* `aurhely_annual_temp`
-* `gsl`
+* `site`, l'identifiant du site ;
+* `longitude`, la longitude du site échantillonné ;
+* `latitude`, la latitude du site échantilloné ;
+* `annual_temp`, la température annuelle moyenne (en 10 * °C) du site échantillonné d'après les modélisations WorldClim [@hijmans_very_2005] ;
+* `annual_prec`, les précipitations annuelles en mm telles d'après les modélisation WorldClim [@hijmans_very_2005] ;          
+* `gsl`, la longueur de la saison de croissance, en nombre de jours (voir dernière partie pour l'explication du calcul).
 
 Pour `divgrass_releves`:
 
-* `site`
-* `species`
-* `abund`
+* `site`, l'identifiant du site ;
+* `species`, le nom binomial de l'espèce observée dans le site ;
+* `abund`, l'abondance locale de l'espèce dans le site observée.
 
 Enfin pour `divgrass_traits`:
 
-* `species`
-* `sla`
-* `plant_height`
-* `seed_mass`
-* `ldmc`
-* `leaf_area`
+* `species`, le nom binomial de l'espèce ;
+* `sla`, la surface spécifique foliaire moyenne de l'espèce d'après la base de données TRY [@kattge_try_2011] ;
+* `ldmc` [@kattge_try_2011] ;
 * `lnc_m`
 * `lpc_m`
-* `lnc_a`
-* `vcmax`
 
 En regardant le tableau des traits (avec la fonction `summary()`), on remarque que beaucoup de traits sont manquants et que le nombre de traits manquant dépend des traits choisis.
 
@@ -173,7 +152,7 @@ hist(un_site$sla, main = "Distribution de la surface spécifique foliaire dans u
 
 Représenter les histogrammes pour les autres traits. *Que remarquez-vous ?*
 
-La variance des traits dans une communauté peut nous renseigner sur les processus contraignant cette communauté (filtre environnemental particulier par exemple). Cependant selon l'hypothèse de **mass-ratio** les organismes les plus abondants (en nombre ou en biomasse) ont le plus gros impact sur les écosystèmes que les espèces les moins abondantes [@Garnier_Plant_2004; @Grime_Benefits_1998]. On peut donc s'intéresser au trait moyen pondéré par les abondances relatives des espèces, c'est le **Community-Weighted Mean** (CWM), il se calcule de la façon suivante :
+La variance des traits dans une communauté peut nous renseigner sur les processus contraignant cette communauté (filtre environnemental particulier par exemple). Cependant selon l'hypothèse de *mass-ratio* les organismes les plus abondants (en nombre ou en biomasse) ont le plus gros impact sur les écosystèmes que les espèces les moins abondantes [@Garnier_Plant_2004; @Grime_Benefits_1998]. On peut donc s'intéresser au trait moyen pondéré par les abondances relatives des espèces, c'est le *Community-Weighted Mean* (CWM), il se calcule de la façon suivante :
 
 $$
 CWM = \sum_{i = 1}^{S}p_i T_i,
@@ -269,32 +248,107 @@ Représenter les cartes pour les autres traits retenus.
 
 ## Relation du CWM aux variables environnementales classiques
 
-Après avoir calculer le CWM des traits par communauté on peut maintenant le relier aux variables environnementales des sites associés aux CWM, afin de voir quelle variation de trait peut être expliquée par les variables environnementales.
+Après avoir calculé le CWM des traits par communauté on peut maintenant les relier aux variables environnementales des sites associés aux CWM.
 
-```{r cwm_env, options}
+```{r cwm_env}
 # On ajoute les variables environnementales aux CWM
 all_cwm = merge(all_cwm, divgrass_env, by = "site")
 ```
 
-Ici on regarde simplement la relation à la température annuelle moyenne et aux précipitations annuelles moyennes.
+Ici s'intéresse à la relation entre température annuelle moyenne, précipitations annuelles moyennes et CWM. On peut commencer par représenter la relation entre ces variables :
 
-On fait un modèle linéaire simple pour voir les relations.
-### Cartes
+```{r cwm_env_plot}
+# Graphique simple
+plot(all_cwm$annual_temp, all_cwm$cwm_sla, main = "Relation CWM SLA <-> Température Annuelle Moyenne", xlab = "Température Annuelle Moyenne", ylab = "Surface Spécifique Foliaire")
+```
+Le résultat est assez fouilli même si l'on a l'impression de discerner une tendance linéaire. On peut le vérifier en utilisant des points transparents :
+
+```{r}
+plot(all_cwm$annual_temp, all_cwm$cwm_sla,
+     main = "Relation CWM SLA <-> Température Annuelle Moyenne",
+     xlab = "Température Annuelle Moyenne",
+     ylab = "Surface Spécifique Foliaire", col = rgb(28, 134, 238, alpha = 33,
+                                                     maxColorValue = 255),
+     pch = 16)
+
+```
+
+Calculer la corrélation entre les deux variables en utilisant la fonction `cor.test()`. Puis utiliser la fonction `lm()` avec la syntaxe suivante `lm(mon_cwm ~ ma_variable_climatique, data = all_cwm)` pour faire une régression linéaire entre la valeur de CWM et la variable climatique.
+
+Le faire pour les précipitations avec l'ensemble des CWM pour l'ensemble des traits.
+Décrire les relations observées.
 
 ## Un meilleur prédicteur des traits foliaires : la longueur de la saison de croissance
 
-### Cartes
+Les relations observées avec la température annuelle moyenne et les précipitations annuelles moyennes existent mais sont faibles. Même si à l'échelle mondiale il a été montré que ces variables climatiques déterminent la variation observée des traits de feuille à l'échelle mondiale [@ordonez_global_2009], elles ne sont pas complètement pertinente biologiquement. En effet, une plante sera sensible non pas uniquement aux conditions moyennes de la communauté au cours de l'année, mais aux conditions tout au long de l'année (voir par exemple @korner_90_2017 pour la description de la température chez une plante).
+
+Dans les milieux tempérés, l'un des déterminants les plus importants pour la croissance des plantes est la disponibilité en eau dans le sol. Cette disponibilité est liée à la capacité de rétention en eau du sol c'est-à-dire la quantité d'eau que le sol peut retenir. Plus le sol aura une forte capacité de rétention plus la disponibilité en eau sera grande.
+La disponibilité en eau du sol dépend aussi de l'évapotranspiration, c'est-à-dire l'eau transpirée par les plantes tout au long de la journée.
+En outre cette disponibilité en eau dépend des précipitations de la communauté, plus elles sont importantes plus l'eau sera disponible pour les plantes.
+
+Un autre déterminant important de la croissance des plantes est la saisonnalité du climat. Pour qu'une plante puisse grandir il faut que la température de l'air ne soit pas trop froide. Dans milieux de prairies tempérées, la plupart des plantes ne montrent plus de croissance quand la température descend en dessous de 5°C.
+
+En combinant des modèles de bilan hydrique qui prédisent la disponibilité en eau le long de l'année aux températures journalières modélisées on peut obtenir la durée de la saison favorable à la croissance des plantes. C'est ce qu'on fait Borgy et collab. [-@borgy_plant_2017] pour créer une nouvelle variable synthétique qui résume ces contraintes : la longeur de la saison favorable (*Growing Season Length*, GSL).
+
+Étant donné le plus grand réalisme biologique impliqué dans la construction de cette variable on s'attend à ce qu'elle détermine mieux les traits foliaires observés que la température annuelle moyenne ou les précipitations annuelles.
+
+Utiliser la variable `gsl` disponible dans le tableau sites-environnement pour étudier la relation avec les CWM des différents traits foliaires et comparer aux autre variables climatiques.
 
 
-Relation CWM <-> Environnement
+## Une autre façon d'étudier les relations traits–environnement : l'analyse en quatrième-coin
 
-Interprétation
+Plusieurs articles très récents [@Miller_Functional_2018; @Muscarella_communityweighted_2016; @Peres-Neto_Linking_2016] remettent en cause les bases statistiques de l'utilisation des relations CWM <-> environnement pour déterminer les traits importants dans certains environnements. 
+Les critiques portent non pas sur l'utilisation du CWM en tant que telle (liée au *mass ratio hypothesis*), mais sur la manière de quantifier le lien qui existe avec les variables environnementales.
 
-[@Miller_Functional_2018; @Muscarella_communityweighted_2016; @Peres-Neto_Linking_2016]
-Importance des modèles nuls
+L'idée est de coupler trois tableaux (R : sites-environnement, L : sites-espèces, Q : espèces-traits) afin de comprendre si des variations des traits sont bien associées à des variations de l'environnement, c'est-à-dire, de trouver le quatrième coin d'association (voir figure RLQ au tableau).
 
-Indices multivariés [@Villeger_New_2008] insérer figure de description issue de [@Mouillot_functional_2013]. Permet de comprendre quelle dimension varie.
+On peut utiliser la fonction `fourthcorner` du package `ade4` pour la mettre en œuvre. La première étape est de mettre en forme les tableaux comme demandés par `ade4` :
 
-## Autre façon d'étudier les relations traits environnements : l'analyse RLQ ?
+```{r using_rlq}
+# Tableau de variables environnementales
+env_tab = divgrass_env[, c("annual_temp", "annual_prec", "gsl")]
+rownames(env_tab) = divgrass_env$site
 
-Utilisation du package `ade4` controverses autour du patron statistique CWM <-> environnement.
+# Il faut ensuite reformater le tableau site-espèces
+# On doit obtenir les sites en lignes, les espèces en colonnes et à l'intersection
+# l'abondance locale des espèces
+# pour nous aider on peut utiliser la fonction 'spread()' du package 'tidyr'
+site_sp_tab = tidyr::spread(divgrass_releves, species, abund)
+rownames(site_sp_tab) = site_sp_tab$site
+site_sp_tab = site_sp_tab[, -1]  # On enlève la colonne site
+
+# Le tableau de traits
+trait_tab = divgrass_traits
+rownames(trait_tab) = trait_tab$species
+trait_tab = trait_tab[, c("sla", "ldmc", "lnc_m", "lpc_m")]
+```
+
+Maintenant que les trois tableaux sont formatés on peut procéder à l'analyse en quatrième coin :
+
+```{r fourth_corner}
+divgrass_rlq = ade4::fourthcorner(env_tab, site_sp_tab, trait_tab)
+```
+Comme certains traits sont manquant l'analyse ne peut fonctionner il ne faut donc sélectionner que les espèces pour lesquelles on a les traits.
+
+```{r missing_traits}
+# On sélectionne les espèces pour lesquelles on a des traits
+trait_tab_no_missing = trait_tab[complete.cases(trait_tab),]
+
+# On doit faire un sous-ensemble des espèces pour lesquelles on a les traits et qui sont bien dans nos sites
+no_missing_species = intersect(rownames(trait_tab_no_missing), colnames(site_sp_tab))
+
+trait_tab_no_missing = trait_tab_no_missing[no_missing_species, ]
+
+site_sp_tab_no_missing = site_sp_tab[, no_missing_species]
+site_sp_tab_no_missing[is.na(site_sp_tab_no_missing)] = 0
+```
+
+Et on peut relancer l'analyse en quatrième-coin (attention cette analyse peut être assez longue et gourmande en calcul !).
+
+```{r}
+divgrass_rlq = ade4::fourthcorner(env_tab, site_sp_tab_no_missing,
+                                  trait_tab_no_missing, nrepet = 99)
+summary(divgrass_rlq)
+plot(divgrass_rlq)
+```
+
